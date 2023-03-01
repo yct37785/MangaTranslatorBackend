@@ -1,5 +1,6 @@
 import express from 'express';
 const router = express.Router();
+import { v4 as uuidv4 } from 'uuid';
 import { makeSimpleQuery } from '../modules/mysql.js';
 
 /**
@@ -8,10 +9,11 @@ import { makeSimpleQuery } from '../modules/mysql.js';
 router.post('/submit', async (req, res) => {
   let data = req.body;
   try {
-    const jobID = 'testing';
-    // do OCR and translation
+    const job_id = uuidv4();
+    // do OCR and translation async
 
-    res.status(200).json(jobID);
+    // return job ID immediately
+    res.status(200).json(job_id);
   } catch (e) {
     res.status(400).json('Bad request');
   }
@@ -37,11 +39,13 @@ router.post('/status', async (req, res) => {
 router.post('/transcription', async (req, res) => {
   let data = req.body;
   try {
-    const jobID = 'testing';
+    const job_id = 'testing';
     // poll db for transcription with job ID
     
-    res.status(200).json(jobID);
+    res.status(200).json(job_id);
   } catch (e) {
     res.status(400).json('Bad request');
   }
 });
+
+export default router;
