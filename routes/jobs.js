@@ -1,7 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import { v4 as uuidv4 } from 'uuid';
-import { makeSimpleQuery } from '../modules/mysql.js';
+import { createNewJob } from '../modules/jobUtils.js';
 
 /**
  * submit new job
@@ -9,7 +8,9 @@ import { makeSimpleQuery } from '../modules/mysql.js';
 router.post('/submit', async (req, res) => {
   let data = req.body;
   try {
-    const job_id = uuidv4();
+    // create job
+    const job_id = await createNewJob();
+
     // do OCR and translation async
 
     // return job ID immediately
