@@ -1,6 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import { createNewJob } from '../modules/jobUtils.js';
+import { processTranscription } from '../modules/transcription.js';
 
 /**
  * submit new job
@@ -10,9 +11,8 @@ router.post('/submit', async (req, res) => {
   try {
     // create job
     const job_id = await createNewJob();
-
     // do OCR and translation async
-
+    processTranscription(job_id);
     // return job ID immediately
     res.status(200).json(job_id);
   } catch (e) {
