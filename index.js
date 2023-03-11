@@ -1,5 +1,6 @@
 import express from 'express';
 import 'dotenv/config';
+import cors from 'cors';
 const app = express();
 // routes
 import jobsRoute from './routes/jobs.js';
@@ -7,6 +8,9 @@ import jobsRoute from './routes/jobs.js';
 // express
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Automatically allow cross-origin requests
+app.use(cors({ origin: true }));
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
