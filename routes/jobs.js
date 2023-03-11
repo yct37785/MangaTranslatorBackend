@@ -9,8 +9,7 @@ import { processTranscription } from '../modules/transcription.js';
 router.post('/submit', async (req, res) => {
   try {
     let data = req.body;
-    console.log(Object.keys(req.res));
-    console.log(JSON.stringify(req.body));
+    console.log(Object.keys(data));
     // create job
     const job_id = await createNewJob();
     // do OCR and translation async

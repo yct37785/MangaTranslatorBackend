@@ -1,16 +1,17 @@
 import express from 'express';
 import 'dotenv/config';
 import bodyParser from 'body-parser';
+import multer from 'multer';
 import cors from 'cors';
 const app = express();
+var upload = multer();
 // routes
 import jobsRoute from './routes/jobs.js';
-// utils
-// express
-// app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
+// parsing specifications setup
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static('public'));
+app.use(upload.array());  // multipart/form-data
 
 // Automatically allow cross-origin requests
 app.use(cors({ origin: true }));
