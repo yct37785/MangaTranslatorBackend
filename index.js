@@ -1,13 +1,16 @@
 import express from 'express';
 import 'dotenv/config';
+import bodyParser from 'body-parser';
 import cors from 'cors';
 const app = express();
 // routes
 import jobsRoute from './routes/jobs.js';
 // utils
 // express
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Automatically allow cross-origin requests
 app.use(cors({ origin: true }));
