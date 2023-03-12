@@ -9,16 +9,16 @@ import { processTranscription } from '../modules/transcription.js';
 router.post('/submit', async (req, res) => {
   try {
     let data = req.body;
-    // retrive img blobs
+    // retrive img base64 strs
     const total_imgs = data.totalPages;
-    let img_blobs = [];
+    let img_b64s = [];
     for (let i = 0; i < total_imgs; ++i) {
-      img_blobs.push(data[i.toString()]);
+      img_b64s.push(data[i.toString()]);
     }
     // create job
     const job_id = await createNewJob();
     // do OCR and translation async
-    processTranscription(job_id, img_blobs);
+    processTranscription(job_id, img_b64s);
     // return job ID immediately
     res.status(200).json({ job_id: job_id });
   } catch (e) {
