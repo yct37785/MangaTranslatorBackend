@@ -22,6 +22,7 @@ router.post('/submit', async (req, res) => {
     // return job ID immediately
     res.status(200).json({ job_id: job_id });
   } catch (e) {
+    console.log(e);
     res.status(400).json('Bad request');
   }
 });
