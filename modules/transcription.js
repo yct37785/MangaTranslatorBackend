@@ -20,15 +20,46 @@ async function visionOCR(img_b64s) {
   // const [result] = await client.batchAnnotateImages(request);
   // mock text data
   const result = { responses: [] };
-  const data = fs.readFileSync('data/vision_sdata_rawkuma.json', 'utf8');
+  const data = fs.readFileSync('data/vision_data_mangadex.json', 'utf8');
   result.responses = JSON.parse(data).responses;
   // write results to text file (debug)
-  // fs.writeFile('data/vision_data_rawkuma.json', JSON.stringify(result), err => {
+  // fs.writeFile('data/vision_data_mangadex.json', JSON.stringify(result), err => {
   //   if (err) {
   //     reject(err);
   //   }
   // });
   return result.responses.map((res) => res.fullTextAnnotation);
+}
+
+/**
+ * parse raw Vision transcript into block level text
+ */
+function parseTranscription(fullTextAnnotations) {
+  const blockText = [];
+  fullTextAnnotations.map((page) => {
+    page.pages[0].blocks.map((block) => {
+      let blockStr = '';
+      // block level text
+      for (let i = 0; i < block.paragraphs.length; ++i) {
+        for (let j = 0; j < block.paragraphs[i].words.length; ++j) {
+          for (let k = 0; k < block.paragraphs[i].words[j].symbols.length; ++k) {
+            const symbol = block.paragraphs[i].words[j].symbols[k];
+            blockStr += symbol.text;
+            let type = '';
+            if (symbol.property && symbol.property.detectedBreak) {
+              type = symbol.property.detectedBreak.type;
+            }
+            if (type == 'LINE_BREAK' || type == 'SPACE' || type == 'EOL_SURE_SPACE') {
+              blockStr += ' ';
+            }
+          }
+        }
+      }
+      console.log(blockStr);
+      blockText.push({ text: blockStr, vertices: block.boundingBox.vertices});
+    });
+  });
+  return blockText;
 }
 
 /**
@@ -40,10 +71,14 @@ export function processTranscription(job_id, img_b64s) {
     try {
       console.log("Job: " + job_id);
       console.log("Total imgs: " + img_b64s.length);
+      console.log("Begin OCR...");
       const fullTextAnnotations = await visionOCR(img_b64s);
-      console.log(fullTextAnnotations[0].pages[0].blocks.length);
+      console.log("OCR completed, total of " + fullTextAnnotations[0].pages[0].blocks.length + " blocks detected");
+      const blockText = parseTranscription(fullTextAnnotations);
+      console.log("Begin translation...");
       resolve();
     } catch(e) {
+      reject(e);
       console.log("processTranscription error:", JSON.stringify(e));
     }
   });
