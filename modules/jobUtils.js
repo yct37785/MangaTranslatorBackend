@@ -11,7 +11,7 @@ export async function createNewJob() {
       await makeSimpleQuery(query, params);
       resolve(job_id);
     } catch (e) {
-      reject("internal server error");
+      console.log("createNewJob error:", JSON.stringify(e));
     }
   });
 }

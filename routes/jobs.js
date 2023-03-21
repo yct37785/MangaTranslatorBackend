@@ -22,7 +22,7 @@ router.post('/submit', async (req, res) => {
     // return job ID immediately
     res.status(200).json({ job_id: job_id });
   } catch (e) {
-    console.log(e);
+    console.log("/submit error:", JSON.stringify(e));
     res.status(400).json('Bad request');
   }
 });
@@ -37,6 +37,7 @@ router.post('/status', async (req, res) => {
 
     res.status(200).json(retData);
   } catch (e) {
+    console.log("/status error:", JSON.stringify(e));
     res.status(400).json('Bad request');
   }
 });
@@ -52,6 +53,7 @@ router.post('/transcription', async (req, res) => {
     
     res.status(200).json(job_id);
   } catch (e) {
+    console.log("/transcription error:", JSON.stringify(e));
     res.status(400).json('Bad request');
   }
 });
