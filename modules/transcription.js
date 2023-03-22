@@ -20,10 +20,10 @@ async function visionOCR(img_b64s) {
   // const [result] = await client.batchAnnotateImages(request);
   // mock text data
   const result = { responses: [] };
-  const data = fs.readFileSync('data/vision_data_mangadex.json', 'utf8');
+  const data = fs.readFileSync('data/vision_data_rawkuma.json', 'utf8');
   result.responses = JSON.parse(data).responses;
   // write results to text file (debug)
-  // fs.writeFile('data/vision_data_mangadex.json', JSON.stringify(result), err => {
+  // fs.writeFile('data/vision_data_rawkuma.json', JSON.stringify(result), err => {
   //   if (err) {
   //     reject(err);
   //   }
@@ -37,6 +37,7 @@ async function visionOCR(img_b64s) {
 function parseTranscription(fullTextAnnotations) {
   const blockText = [];
   fullTextAnnotations.map((page) => {
+    let pageChrCount = 0;
     page.pages[0].blocks.map((block) => {
       let blockStr = '';
       // block level text
@@ -55,9 +56,11 @@ function parseTranscription(fullTextAnnotations) {
           }
         }
       }
-      console.log(blockStr);
+      // console.log(blockStr);
       blockText.push({ text: blockStr, vertices: block.boundingBox.vertices});
+      pageChrCount += blockStr.length;
     });
+    console.log("Chr count: " + pageChrCount);
   });
   return blockText;
 }
