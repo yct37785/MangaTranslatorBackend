@@ -69,6 +69,40 @@ function parseTranscription(fullTextAnnotations) {
 }
 
 /**
+ * Deepl translation
+ * to save resources, bunch multiple pages into one request
+ * each page to a text param
+ */
+async function deeplTranslation(pageText) {
+  // sample axios post
+  const { data } = await axios.post('https://httpbin.org/post', {
+    firstName: 'Fred',
+    lastName: 'Flintstone',
+    orders: [1, 2, 3],
+    photo: document.querySelector('#fileInput').files
+  }, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  }
+  )
+  // build requests
+  const reqList = [];
+  let chrCount = 0;
+  for (let i = 0; i < pageText.length; ++i) {
+    // new req object
+    if (reqList.length == 0 || chrCount + pageText[i].length > 1024) {
+      reqList.push({
+        body: {},
+        headers: {}
+      });
+      chrCount = pageText[i].length;
+    }
+    // add text to param
+  }
+}
+
+/**
  * processes the images -> transcriptions and store it in the DB
  * it is up to the client to poll for any updates
  */
