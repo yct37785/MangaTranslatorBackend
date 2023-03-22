@@ -32,12 +32,15 @@ async function visionOCR(img_b64s) {
 }
 
 /**
- * parse raw Vision transcript into block level text
+ * parse raw Vision transcript into:
+ * + page: sentences
+ * + + block: sentence + \n
  */
 function parseTranscription(fullTextAnnotations) {
-  const blockText = [];
+  const pageText = [];
+  const blockVerts = [];
   fullTextAnnotations.map((page) => {
-    let pageChrCount = 0;
+    pageText.push('');
     page.pages[0].blocks.map((block) => {
       let blockStr = '';
       // block level text
@@ -56,13 +59,13 @@ function parseTranscription(fullTextAnnotations) {
           }
         }
       }
-      // console.log(blockStr);
-      blockText.push({ text: blockStr, vertices: block.boundingBox.vertices});
-      pageChrCount += blockStr.length;
+      // console.log('+' + blockStr + '+');
+      pageText[pageText.length - 1] += blockStr + '\n';
+      blockVerts.push(block.boundingBox.vertices);
     });
-    console.log("Chr count: " + pageChrCount);
+    console.log('Chr count: ' + pageText[pageText.length - 1].length);
   });
-  return blockText;
+  return { pageText: pageText, blockVerts: blockVerts };
 }
 
 /**
@@ -77,7 +80,7 @@ export function processTranscription(job_id, img_b64s) {
       console.log("Begin OCR...");
       const fullTextAnnotations = await visionOCR(img_b64s);
       console.log("OCR completed, total of " + fullTextAnnotations[0].pages[0].blocks.length + " blocks detected");
-      const blockText = parseTranscription(fullTextAnnotations);
+      const transcriptData = parseTranscription(fullTextAnnotations);
       console.log("Begin translation...");
       resolve();
     } catch(e) {
