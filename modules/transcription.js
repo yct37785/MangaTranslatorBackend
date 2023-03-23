@@ -74,18 +74,6 @@ function parseTranscription(fullTextAnnotations) {
  * each page to a text param
  */
 async function deeplTranslation(pageText) {
-  // sample axios post
-  const { data } = await axios.post('https://httpbin.org/post', {
-    firstName: 'Fred',
-    lastName: 'Flintstone',
-    orders: [1, 2, 3],
-    photo: document.querySelector('#fileInput').files
-  }, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  }
-  )
   // build requests
   const reqList = [];
   let chrCount = 0;
@@ -93,13 +81,16 @@ async function deeplTranslation(pageText) {
     // new req object
     if (reqList.length == 0 || chrCount + pageText[i].length > 1024) {
       reqList.push({
-        body: {},
-        headers: {}
+        body: new FormData(),
+        headers: { 'Content-Type': 'multipart/form-data', 'Authorization': 'asdasd' }
       });
       chrCount = pageText[i].length;
+      reqList[reqList.length - 1].body.append('target_lang', 'EN');
     }
     // add text to param
+    reqList[reqList.length - 1].body.append('text', pageText[i]);
   }
+  // axios.post(url, fd, { headers: {} })
 }
 
 /**
