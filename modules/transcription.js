@@ -1,5 +1,7 @@
+import axios from 'axios';
 import vision from '@google-cloud/vision';
-import fs from 'fs'
+import fs from 'fs';
+import FormData from 'form-data';
 
 /**
  * vision OCR
@@ -75,22 +77,45 @@ function parseTranscription(fullTextAnnotations) {
  */
 async function deeplTranslation(pageText) {
   // build requests
-  const reqList = [];
-  let chrCount = 0;
-  for (let i = 0; i < pageText.length; ++i) {
-    // new req object
-    if (reqList.length == 0 || chrCount + pageText[i].length > 1024) {
-      reqList.push({
-        body: new FormData(),
-        headers: { 'Content-Type': 'multipart/form-data', 'Authorization': 'asdasd' }
-      });
-      chrCount = pageText[i].length;
-      reqList[reqList.length - 1].body.append('target_lang', 'EN');
-    }
-    // add text to param
-    reqList[reqList.length - 1].body.append('text', pageText[i]);
-  }
+  const apikey = `DeepL-Auth-Key ${process.env.deepl_apikey}`;
+  // const reqs = [];
+  // let chrCount = 0;
+  // for (let i = 0; i < pageText.length; ++i) {
+  //   // new req object
+  //   if (reqs.length == 0 || chrCount + pageText[i].length > 1024) {
+  //     reqs.push({
+  //       body: new FormData(),
+  //       headers: { 'Content-Type': 'multipart/form-data', 'Authorization': apikey }
+  //     });
+  //     chrCount = pageText[i].length;
+  //     reqs[reqs.length - 1].body.append('target_lang', 'EN');
+  //   }
+  //   // add text to param
+  //   reqs[reqs.length - 1].body.append('text', pageText[i]);
+  // }
+  // test
+  const reqs = [];
+  reqs.push({
+    body: new FormData(),
+    headers: { 'Content-Type': 'multipart/form-data', 'Authorization': apikey }
+  });
+  reqs[reqs.length - 1].body.append('target_lang', 'DE');
+  reqs[reqs.length - 1].body.append('text', 'good morning');
+  reqs[reqs.length - 1].body.append('text', 'good afternoon');
+  reqs.push({
+    body: new FormData(),
+    headers: { 'Content-Type': 'multipart/form-data', 'Authorization': apikey }
+  });
+  reqs[reqs.length - 1].body.append('target_lang', 'DE');
+  reqs[reqs.length - 1].body.append('text', 'good evening');
+  reqs[reqs.length - 1].body.append('text', 'good night');
   // axios.post(url, fd, { headers: {} })
+  const res_list = await Promise.all(reqs.map((req) =>
+    axios.post('https://api-free.deepl.com/v2/translate', req.body, { headers: req.headers })));
+  for (let i = 0; i < res_list.length; ++i) {
+    console.log('-');
+    console.log(JSON.stringify(res_list[i].data));
+  }
 }
 
 /**
@@ -107,6 +132,7 @@ export function processTranscription(job_id, img_b64s) {
       console.log("OCR completed, total of " + fullTextAnnotations[0].pages[0].blocks.length + " blocks detected");
       const transcriptData = parseTranscription(fullTextAnnotations);
       console.log("Begin translation...");
+      await deeplTranslation(transcriptData.pageText);
       resolve();
     } catch(e) {
       reject(e);
