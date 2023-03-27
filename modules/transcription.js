@@ -1,5 +1,6 @@
 import axios from 'axios';
 import vision from '@google-cloud/vision';
+import { Storage } from '@google-cloud/storage';
 import fs from 'fs';
 import FormData from 'form-data';
 
@@ -119,6 +120,19 @@ async function deeplTranslation(pageText) {
 }
 
 /**
+ * Store bulk transcription into cloud storage
+ */
+async function cloudStorage(job_id) {
+  // create a json file and upload to cloud
+  const testData = { test1: 'test1', test2: 'test2', test3: 'test3' };
+  const bucketName = 'vision-for-manga-transcripts';
+  const storage = new Storage();
+  const bucket = storage.bucket(bucketName);
+  const file = bucket.file(`${job_id}.json`);
+  await file.save(JSON.stringify(testData));
+}
+
+/**
  * processes the images -> transcriptions and store it in the DB
  * it is up to the client to poll for any updates
  */
@@ -132,7 +146,8 @@ export function processTranscription(job_id, img_b64s) {
       console.log("OCR completed, total of " + fullTextAnnotations[0].pages[0].blocks.length + " blocks detected");
       const transcriptData = parseTranscription(fullTextAnnotations);
       console.log("Begin translation...");
-      await deeplTranslation(transcriptData.pageText);
+      // await deeplTranslation(transcriptData.pageText);
+      await cloudStorage(job_id);
       resolve();
     } catch(e) {
       reject(e);
