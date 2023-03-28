@@ -1,38 +1,6 @@
-import axios from 'axios';
-import vision from '@google-cloud/vision';
-import { Storage } from '@google-cloud/storage';
-import fs from 'fs';
-import FormData from 'form-data';
-
-/**
- * vision OCR
- */
-async function visionOCR(img_b64s) {
-  // requests
-  // const imgRequests = img_b64s.map((b64) => {
-  //   return {
-  //     image: { content: Buffer.from(b64, 'base64') },
-  //     features: [{ type: 'TEXT_DETECTION' }]
-  //   }
-  // });
-  // const request = {
-  //   requests: imgRequests
-  // };
-  // // detect text Vision API
-  // const client = new vision.ImageAnnotatorClient();
-  // const [result] = await client.batchAnnotateImages(request);
-  // mock text data
-  const result = { responses: [] };
-  const data = fs.readFileSync('data/vision_data_rawkuma.json', 'utf8');
-  result.responses = JSON.parse(data).responses;
-  // write results to text file (debug)
-  // fs.writeFile('data/vision_data_rawkuma.json', JSON.stringify(result), err => {
-  //   if (err) {
-  //     reject(err);
-  //   }
-  // });
-  return result.responses.map((res) => res.fullTextAnnotation);
-}
+import { imageOCR } from '../utils/vision_utils.js';
+import { deeplTranslation } from '../utils/deepl.js';
+import { uploadDataToCloud } from '../utils/gcloud.js';
 
 /**
  * parse raw Vision transcript into:
@@ -72,64 +40,12 @@ function parseTranscription(fullTextAnnotations) {
 }
 
 /**
- * Deepl translation
- * to save resources, bunch multiple pages into one request
- * each page to a text param
- */
-async function deeplTranslation(pageText) {
-  // build requests
-  const apikey = `DeepL-Auth-Key ${process.env.deepl_apikey}`;
-  // const reqs = [];
-  // let chrCount = 0;
-  // for (let i = 0; i < pageText.length; ++i) {
-  //   // new req object
-  //   if (reqs.length == 0 || chrCount + pageText[i].length > 1024) {
-  //     reqs.push({
-  //       body: new FormData(),
-  //       headers: { 'Content-Type': 'multipart/form-data', 'Authorization': apikey }
-  //     });
-  //     chrCount = pageText[i].length;
-  //     reqs[reqs.length - 1].body.append('target_lang', 'EN');
-  //   }
-  //   // add text to param
-  //   reqs[reqs.length - 1].body.append('text', pageText[i]);
-  // }
-  // test
-  const reqs = [];
-  reqs.push({
-    body: new FormData(),
-    headers: { 'Content-Type': 'multipart/form-data', 'Authorization': apikey }
-  });
-  reqs[reqs.length - 1].body.append('target_lang', 'DE');
-  reqs[reqs.length - 1].body.append('text', 'good morning');
-  reqs[reqs.length - 1].body.append('text', 'good afternoon');
-  reqs.push({
-    body: new FormData(),
-    headers: { 'Content-Type': 'multipart/form-data', 'Authorization': apikey }
-  });
-  reqs[reqs.length - 1].body.append('target_lang', 'DE');
-  reqs[reqs.length - 1].body.append('text', 'good evening');
-  reqs[reqs.length - 1].body.append('text', 'good night');
-  // axios.post(url, fd, { headers: {} })
-  const res_list = await Promise.all(reqs.map((req) =>
-    axios.post('https://api-free.deepl.com/v2/translate', req.body, { headers: req.headers })));
-  for (let i = 0; i < res_list.length; ++i) {
-    console.log('-');
-    console.log(JSON.stringify(res_list[i].data));
-  }
-}
-
-/**
  * Store bulk transcription into cloud storage
  */
 async function cloudStorage(job_id) {
   // create a json file and upload to cloud
   const testData = { test1: 'test1', test2: 'test2', test3: 'test3' };
-  const bucketName = 'vision-for-manga-transcripts';
-  const storage = new Storage();
-  const bucket = storage.bucket(bucketName);
-  const file = bucket.file(`${job_id}.json`);
-  await file.save(JSON.stringify(testData));
+  await uploadDataToCloud(`${job_id}.json`, JSON.stringify(testData));
 }
 
 /**
@@ -142,11 +58,12 @@ export function processTranscription(job_id, img_b64s) {
       console.log("Job: " + job_id);
       console.log("Total imgs: " + img_b64s.length);
       console.log("Begin OCR...");
-      const fullTextAnnotations = await visionOCR(img_b64s);
+      const fullTextAnnotations = await imageOCR(img_b64s);
       console.log("OCR completed, total of " + fullTextAnnotations[0].pages[0].blocks.length + " blocks detected");
       const transcriptData = parseTranscription(fullTextAnnotations);
       console.log("Begin translation...");
-      // await deeplTranslation(transcriptData.pageText);
+      await deeplTranslation(transcriptData.pageText);
+      console.log("Store data to cloud...");
       await cloudStorage(job_id);
       resolve();
     } catch(e) {
