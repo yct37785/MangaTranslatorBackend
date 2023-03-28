@@ -11,3 +11,11 @@ export async function uploadDataToCloud(filename, data) {
   const file = bucket.file(filename);
   await file.save(data);
 }
+
+export async function retriveDataFromCloud(filename) {
+  const storage = new Storage();
+  const bucket = storage.bucket(process.env.gc_bucket_name);
+  const file = bucket.file(filename);
+  const contents = await file.download();
+  return contents.toString();
+}

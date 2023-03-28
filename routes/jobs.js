@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import { createNewJob } from '../modules/jobUtils.js';
+import { createNewJob, getJobData } from '../modules/jobUtils.js';
 import { processTranscription } from '../modules/transcription.js';
 
 /**
@@ -45,13 +45,12 @@ router.post('/status', async (req, res) => {
 /**
  * get transcription from job ID
  */
-router.post('/transcription', async (req, res) => {
-  let data = req.body;
+router.get('/transcription', async (req, res) => {
+  console.log(JSON.stringify(req.query));
+  let job_id = req.query.job_id;
   try {
-    const job_id = 'testing';
-    // poll db for transcription with job ID
-    
-    res.status(200).json(job_id);
+    // poll storage for transcription with job ID
+    res.status(200).json(await getJobData(job_id));
   } catch (e) {
     console.log("/transcription error:", JSON.stringify(e));
     res.status(400).json('Bad request');
