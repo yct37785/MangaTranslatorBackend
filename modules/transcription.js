@@ -1,5 +1,5 @@
 import { imageOCR } from '../utils/vision_utils.js';
-import { deeplTranslation } from '../utils/deepl.js';
+import { deeplTranslation } from '../utils/deepl_utils.js';
 import { uploadDataToCloud } from '../utils/gcloud.js';
 
 /**
@@ -58,14 +58,20 @@ export function processTranscription(job_id, img_b64s) {
     try {
       console.log("Job: " + job_id);
       console.log("Total imgs: " + img_b64s.length);
+      /* OCR */
       console.log("Begin OCR...");
       const fullTextAnnotations = await imageOCR(img_b64s);
       console.log("OCR completed, total of " + fullTextAnnotations[0].pages[0].blocks.length + " blocks detected");
+      /* parse */
       const transcriptData = parseTranscription(fullTextAnnotations);
+      /* deepl */
       console.log("Begin translation...");
-      await deeplTranslation(transcriptData.pageText);
-      console.log("Store data to cloud...");
-      await cloudStorage(job_id);
+      const pageText = await deeplTranslation(transcriptData.pageText);
+      console.log("Translation completed");
+      /* parse */
+      // console.log("Store data to cloud...");
+      // await cloudStorage(job_id);
+      // console.log("Cloud store completed");
       resolve();
     } catch(e) {
       reject(e);
