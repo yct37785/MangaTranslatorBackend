@@ -31,6 +31,7 @@ function parseTranscription(fullTextAnnotations) {
         }
       }
       // console.log('+' + blockStr + '+');
+      blockStr = blockStr.replaceAll('\n', '');
       pageText[pageText.length - 1] += blockStr + '\n';
       blockVerts.push(block.boundingBox.vertices);
     });
