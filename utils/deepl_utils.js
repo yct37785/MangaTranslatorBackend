@@ -78,11 +78,11 @@ export async function deeplTranslation(pageText) {
   // });
 
   // parse data
-  const pageText = [];
+  const retList = [];
   res_list.map((res) => {
     res.data.translations.map((translation) => {
-      pageText.push(translation.text);
+      retList.push(translation.text);
     });
   });
-  return pageText;
+  return retList;
 }

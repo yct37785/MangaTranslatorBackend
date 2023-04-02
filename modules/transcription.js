@@ -1,17 +1,19 @@
 import { imageOCR } from '../utils/vision_utils.js';
 import { deeplTranslation } from '../utils/deepl_utils.js';
 import { uploadDataToCloud } from '../utils/gcloud.js';
+import fs from 'fs';
 
 /**
  * parse raw Vision transcript into:
- * + page: sentences
- * + + block: sentence + \n
+ * + pageText[i]: sentences in one string
+ * + + block text = corr. line of pageText[i]
  */
-function parseTranscription(fullTextAnnotations) {
+function parseTranscription(visionData) {
   const pageText = [];
-  const blockVerts = [];
-  fullTextAnnotations.map((page) => {
+  const pageBlockVerts = [];
+  visionData.map((page) => {
     pageText.push('');
+    pageBlockVerts.push([]);
     page.pages[0].blocks.map((block) => {
       let blockStr = '';
       // block level text
@@ -30,23 +32,29 @@ function parseTranscription(fullTextAnnotations) {
           }
         }
       }
-      // console.log('+' + blockStr + '+');
       blockStr = blockStr.replaceAll('\n', '');
       pageText[pageText.length - 1] += blockStr + '\n';
-      blockVerts.push(block.boundingBox.vertices);
+      pageBlockVerts[pageBlockVerts.length - 1].push(block.boundingBox.vertices);
     });
     console.log('Chr count: ' + pageText[pageText.length - 1].length);
   });
-  return { pageText: pageText, blockVerts: blockVerts };
+  return { pageText: pageText, pageBlockVerts: pageBlockVerts };
 }
 
 /**
- * Store bulk transcription into cloud storage
+ * parse final transcription data
  */
-async function cloudStorage(job_id) {
-  // create a json file and upload to cloud
-  const testData = { test1: 'test1', test2: 'test2', test3: 'test3' };
-  await uploadDataToCloud(`${job_id}.json`, JSON.stringify(testData));
+function parseFinalTranscript(deeplData, pageBlockVerts) {
+  const pageData = [];
+  for (let i = 0; i < deeplData.length; ++i) {
+    pageData.push([]);
+    const blockText = deeplData[i].split('\n');
+    for (let j = 0; j < blockText.length; ++j) {
+      // console.log(blockText[j]);
+      pageData[pageData.length - 1].push({ text: blockText[j], bb: pageBlockVerts[i][j] })
+    }
+  }
+  return pageData;
 }
 
 /**
@@ -60,18 +68,25 @@ export function processTranscription(job_id, img_b64s) {
       console.log("Total imgs: " + img_b64s.length);
       /* OCR */
       console.log("Begin OCR...");
-      const fullTextAnnotations = await imageOCR(img_b64s);
-      console.log("OCR completed, total of " + fullTextAnnotations[0].pages[0].blocks.length + " blocks detected");
+      const visionData = await imageOCR(img_b64s);
+      console.log("OCR completed");
       /* parse */
-      const transcriptData = parseTranscription(fullTextAnnotations);
+      const transcriptData = parseTranscription(visionData);
       /* deepl */
       console.log("Begin translation...");
-      const pageText = await deeplTranslation(transcriptData.pageText);
+      const deeplData = await deeplTranslation(transcriptData.pageText);
       console.log("Translation completed");
       /* parse */
-      // console.log("Store data to cloud...");
-      // await cloudStorage(job_id);
-      // console.log("Cloud store completed");
+      const pageData = parseFinalTranscript(deeplData, transcriptData.pageBlockVerts);
+      /* cloud */
+      console.log("Store data to cloud...");
+      await uploadDataToCloud(`${job_id}.json`, JSON.stringify(pageData));
+      fs.writeFile('data/ready_data_rawkuma.json', JSON.stringify(pageData, undefined, 2), err => {
+        if (err) {
+          reject(err);
+        }
+      });
+      console.log("Cloud store completed");
       resolve();
     } catch(e) {
       reject(e);
