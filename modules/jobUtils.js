@@ -17,6 +17,20 @@ export async function createNewJob() {
   });
 }
 
+export async function markJobCompleted(job_id) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const curr_epoch = Date.now() / 1000;
+      const query = `update job set completed_epoch = ? where job = ?`;
+      const params = [curr_epoch, job_id];
+      await makeSimpleQuery(query, params);
+      resolve(job_id);
+    } catch (e) {
+      console.log("markJobCompleted error:", JSON.stringify(e));
+    }
+  });
+}
+
 export async function getJobData(job_id) {
   return new Promise(async (resolve, reject) => {
     try {

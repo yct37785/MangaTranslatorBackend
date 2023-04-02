@@ -1,6 +1,7 @@
 import { imageOCR } from '../utils/vision_utils.js';
 import { deeplTranslation } from '../utils/deepl_utils.js';
 import { uploadDataToCloud } from '../utils/gcloud.js';
+import { markJobCompleted } from './jobUtils.js';
 import fs from 'fs';
 
 /**
@@ -36,7 +37,7 @@ function parseTranscription(visionData) {
       pageText[pageText.length - 1] += blockStr + '\n';
       pageBlockVerts[pageBlockVerts.length - 1].push(block.boundingBox.vertices);
     });
-    console.log('Chr count: ' + pageText[pageText.length - 1].length);
+    // console.log('Chr count: ' + pageText[pageText.length - 1].length);
   });
   return { pageText: pageText, pageBlockVerts: pageBlockVerts };
 }
@@ -81,12 +82,16 @@ export function processTranscription(job_id, img_b64s) {
       /* cloud */
       console.log("Store data to cloud...");
       await uploadDataToCloud(`${job_id}.json`, JSON.stringify(pageData));
-      fs.writeFile('data/ready_data_rawkuma.json', JSON.stringify(pageData, undefined, 2), err => {
-        if (err) {
-          reject(err);
-        }
-      });
+      // fs.writeFile('data/ready_data_rawkuma.json', JSON.stringify(pageData, undefined, 2), err => {
+      //   if (err) {
+      //     reject(err);
+      //   }
+      // });
       console.log("Cloud store completed");
+      /* update */
+      console.log("Mark job as done...");
+      await markJobCompleted(job_id);
+      console.log("Job completed");
       resolve();
     } catch(e) {
       reject(e);
