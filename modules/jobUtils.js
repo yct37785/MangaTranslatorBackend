@@ -12,7 +12,7 @@ export async function createNewJob() {
       await makeSimpleQuery(query, params);
       resolve(job_id);
     } catch (e) {
-      console.log("createNewJob error:", JSON.stringify(e));
+      reject("createNewJob error:" + JSON.stringify(e));
     }
   });
 }
@@ -26,7 +26,7 @@ export async function markJobCompleted(job_id) {
       await makeSimpleQuery(query, params);
       resolve(job_id);
     } catch (e) {
-      console.log("markJobCompleted error:", JSON.stringify(e));
+      reject("markJobCompleted error:" + JSON.stringify(e));
     }
   });
 }
@@ -36,7 +36,7 @@ export async function getJobData(job_id) {
     try {
       resolve(await retriveDataFromCloud(`${job_id}.json`));
     } catch (e) {
-      console.log("getJobData error:", JSON.stringify(e));
+      reject("getJobData error:" + JSON.stringify(e));
     }
   });
 }

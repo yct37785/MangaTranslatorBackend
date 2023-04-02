@@ -94,7 +94,7 @@ export function processTranscription(job_id, img_b64s) {
       console.log("Job completed");
       resolve();
     } catch(e) {
-      reject(e);
+      // uncaught error if reject since usage of this function isn't await
       console.log("processTranscription error:", JSON.stringify(e));
     }
   });
