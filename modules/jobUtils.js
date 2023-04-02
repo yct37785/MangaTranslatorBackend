@@ -44,6 +44,19 @@ export async function failJob(job_id) {
   });
 }
 
+export async function getJobStatus(job_id) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const query = `select status from job where job = ?`;
+      const params = [job_id];
+      const result = await makeSimpleQuery(query, params);
+      resolve(result[0].status);
+    } catch (e) {
+      reject("getJobData error:" + JSON.stringify(e));
+    }
+  });
+}
+
 export async function getJobData(job_id) {
   return new Promise(async (resolve, reject) => {
     try {
