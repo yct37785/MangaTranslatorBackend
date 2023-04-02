@@ -1,7 +1,7 @@
 import { imageOCR } from '../utils/vision_utils.js';
 import { deeplTranslation } from '../utils/deepl_utils.js';
 import { uploadDataToCloud } from '../utils/gcloud.js';
-import { markJobCompleted } from './jobUtils.js';
+import { markJobCompleted, failJob } from './jobUtils.js';
 import fs from 'fs';
 
 /**
@@ -96,6 +96,8 @@ export function processTranscription(job_id, img_b64s) {
     } catch(e) {
       // uncaught error if reject since usage of this function isn't await
       console.log("processTranscription error:", JSON.stringify(e));
+      // update job as failed
+      await markJobCompleted(job_id);
     }
   });
 }

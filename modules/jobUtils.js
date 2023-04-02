@@ -8,7 +8,7 @@ export async function createNewJob() {
       const job_id = uuidv4();
       const curr_epoch = Date.now() / 1000;
       const query = `insert into job (job, status, start_epoch, completed_epoch) values (?, ?, ?, ?)`;
-      const params = [job_id, false, curr_epoch, 0];
+      const params = [job_id, 'processing', curr_epoch, 0];
       await makeSimpleQuery(query, params);
       resolve(job_id);
     } catch (e) {
@@ -21,8 +21,21 @@ export async function markJobCompleted(job_id) {
   return new Promise(async (resolve, reject) => {
     try {
       const curr_epoch = Date.now() / 1000;
-      const query = `update job set completed_epoch = ? where job = ?`;
-      const params = [curr_epoch, job_id];
+      const query = `update job set status = ?, completed_epoch = ? where job = ?`;
+      const params = ['completed', curr_epoch, job_id];
+      await makeSimpleQuery(query, params);
+      resolve(job_id);
+    } catch (e) {
+      reject("markJobCompleted error:" + JSON.stringify(e));
+    }
+  });
+}
+
+export async function failJob(job_id) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const query = `update job set status = ? where job = ?`;
+      const params = ['error', job_id];
       await makeSimpleQuery(query, params);
       resolve(job_id);
     } catch (e) {

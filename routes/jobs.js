@@ -17,7 +17,7 @@ router.post('/submit', async (req, res) => {
     }
     // create job
     const job_id = await createNewJob();
-    // do OCR and translation async
+    // trigger transcription
     processTranscription(job_id, img_b64s);
     // return job ID immediately
     res.status(200).json({ job_id: job_id });
