@@ -14,29 +14,31 @@ function parseTranscription(visionData) {
   visionData.map((page) => {
     pageText.push('');
     pageBlockVerts.push([]);
-    page.pages[0].blocks.map((block) => {
-      let blockStr = '';
-      // block level text
-      for (let i = 0; i < block.paragraphs.length; ++i) {
-        for (let j = 0; j < block.paragraphs[i].words.length; ++j) {
-          for (let k = 0; k < block.paragraphs[i].words[j].symbols.length; ++k) {
-            const symbol = block.paragraphs[i].words[j].symbols[k];
-            blockStr += symbol.text;
-            let type = '';
-            if (symbol.property && symbol.property.detectedBreak) {
-              type = symbol.property.detectedBreak.type;
-            }
-            if (type == 'LINE_BREAK' || type == 'SPACE' || type == 'EOL_SURE_SPACE') {
-              blockStr += ' ';
+    if (page != null) {
+      page.pages[0].blocks.map((block) => {
+        let blockStr = '';
+        // block level text
+        for (let i = 0; i < block.paragraphs.length; ++i) {
+          for (let j = 0; j < block.paragraphs[i].words.length; ++j) {
+            for (let k = 0; k < block.paragraphs[i].words[j].symbols.length; ++k) {
+              const symbol = block.paragraphs[i].words[j].symbols[k];
+              blockStr += symbol.text;
+              let type = '';
+              if (symbol.property && symbol.property.detectedBreak) {
+                type = symbol.property.detectedBreak.type;
+              }
+              if (type == 'LINE_BREAK' || type == 'SPACE' || type == 'EOL_SURE_SPACE') {
+                blockStr += ' ';
+              }
             }
           }
         }
-      }
-      // endlines denotes end of block data, we do ont want a conflict
-      blockStr = blockStr.replaceAll('\n', '');
-      pageText[pageText.length - 1] += blockStr + '\n';
-      pageBlockVerts[pageBlockVerts.length - 1].push(block.boundingBox.vertices);
-    });
+        // endlines denotes end of block data, we do ont want a conflict
+        blockStr = blockStr.replaceAll('\n', '');
+        pageText[pageText.length - 1] += blockStr + '\n';
+        pageBlockVerts[pageBlockVerts.length - 1].push(block.boundingBox.vertices);
+      });
+    }
     // console.log('Chr count: ' + pageText[pageText.length - 1].length);
   });
   return { pageText: pageText, pageBlockVerts: pageBlockVerts };
