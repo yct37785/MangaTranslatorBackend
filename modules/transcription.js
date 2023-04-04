@@ -6,8 +6,7 @@ import fs from 'fs';
 
 /**
  * parse raw Vision transcript into:
- * + pageText[i]: sentences in one string
- * + + block text = corr. line of pageText[i]
+ * + pageText[i]: sentences in one string, each sentence = 1 block data
  */
 function parseTranscription(visionData) {
   const pageText = [];
@@ -33,6 +32,7 @@ function parseTranscription(visionData) {
           }
         }
       }
+      // endlines denotes end of block data, we do ont want a conflict
       blockStr = blockStr.replaceAll('\n', '');
       pageText[pageText.length - 1] += blockStr + '\n';
       pageBlockVerts[pageBlockVerts.length - 1].push(block.boundingBox.vertices);
@@ -82,13 +82,13 @@ export function processTranscription(job_id, img_b64s) {
       /* cloud */
       console.log("Store data to cloud...");
       await uploadDataToCloud(`${job_id}.json`, JSON.stringify(pageData));
-      // fs.writeFile('data/ready_data_rawkuma.json', JSON.stringify(pageData, undefined, 2), err => {
-      //   if (err) {
-      //     reject(err);
-      //   }
-      // });
+      fs.writeFile('data/ready_data_rawkuma.json', JSON.stringify(pageData, undefined, 2), err => {
+        if (err) {
+          reject(err);
+        }
+      });
       console.log("Cloud store completed");
-      /* update */
+      /* update job database */
       console.log("Mark job as done...");
       await markJobCompleted(job_id);
       console.log("Job completed");
@@ -97,7 +97,7 @@ export function processTranscription(job_id, img_b64s) {
       // uncaught error if reject since usage of this function isn't await
       console.log("processTranscription error:", JSON.stringify(e));
       // update job as failed
-      await markJobCompleted(job_id);
+      await failJob(job_id);
     }
   });
 }
